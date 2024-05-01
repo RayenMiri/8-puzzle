@@ -21,6 +21,16 @@ class PuzzleSolver:
         return distance
     
     @staticmethod
+    def miri_distance(state):
+        distance  = 0
+        for i in range(8):
+            current_position = state[i]
+            if(state[i]==''):
+                current_position = 0
+            distance = abs(int(current_position)-(i+1))        
+        return distance
+    
+    @staticmethod
     def get_neighbors(state):
         neighbors = []
         zero_index = state.index("")
@@ -34,7 +44,7 @@ class PuzzleSolver:
                 new_state[zero_index], new_state[new_index] = new_state[new_index], new_state[zero_index]
                 neighbors.append(new_state)
         return neighbors
-
+    
     def a_star_search(self):
         initial_state = tuple(self.initial_state)
         goal_state = tuple(self.goal_state)
@@ -43,9 +53,10 @@ class PuzzleSolver:
         came_from = {initial_state: None}
         g_score = {initial_state: 0}
         f_score = {initial_state: self.manhattan_distance(initial_state)}
-
+        
         while open_set:
             _, current = heapq.heappop(open_set)
+            
             if current == goal_state:
                 return self.reconstruct_path(came_from, current)
 
@@ -56,6 +67,7 @@ class PuzzleSolver:
                     came_from[next_state] = current
                     g_score[next_state] = tentative_g_score
                     f_score[next_state] = tentative_g_score + self.manhattan_distance(next_state)
+                    
                     heapq.heappush(open_set, (f_score[next_state], next_state))
 
         return None
@@ -84,6 +96,7 @@ class PuzzleGame:
         
     def solve_puzzle(self):
         initial_state = [self.tiles[(row, col)]['text'] for row in range(3) for col in range(3)]
+        
         solver = PuzzleSolver(initial_state, self.winning_pos)
         solution_path = solver.a_star_search()
         if solution_path:
@@ -157,23 +170,30 @@ class PuzzleGame:
             self.tiles[(row, col)].config(text=str(i) if i != 0 else "", background=cf._from_rgb((0, 255, 100)) if i == 0 else None)
 
     def start_game(self, p):
-        self.tiles_frame = tk.Frame(self.master)
-        self.tiles_frame.pack()
+        self.master.configure(background='lightgrey')  # Set a background color for the window
+        self.tiles_frame = tk.Frame(self.master, bg='lightgrey')
+        self.tiles_frame.pack(pady=(100, 0))  # Add padding to center the frame vertically
+
+        # Use a larger, bold font for the numbers on the tiles
+        tile_font = ('Arial', 24, 'bold')
+
         for c, i in enumerate(p):
             row, col = divmod(c, 3)
-            if i == 0:
-                tile = tk.Button(self.tiles_frame, background=cf._from_rgb((0, 255, 100)), text="", width=7, height=4,
-                                command=lambda x=row, y=col: self.on_tile_click(x, y))
-            else:
-                tile = tk.Button(self.tiles_frame, background='white', text=str(i), width=7, height=4,
-                                command=lambda x=row, y=col: self.on_tile_click(x, y))
-            tile.grid(row=row, column=col)
+            tile_color = 'white' if i != 0 else cf._from_rgb((0, 255, 100))
+            tile_text = str(i) if i != 0 else ""
+            tile = tk.Button(self.tiles_frame, background=tile_color, text=tile_text, width=5, height=2,
+                             font=tile_font, command=lambda x=row, y=col: self.on_tile_click(x, y))
+            tile.grid(row=row, column=col, padx=5, pady=5)  # Add padding between tiles
             self.tiles[(row, col)] = tile
-        reset_button = tk.Button(self.master, text="Restart", width=7, height=2, command=self.reset_game)
-        reset_button.pack()
-        self.update_status_bar("Ready to play!")
-        solve_button = tk.Button(self.master, text="Solve", width=7, height=2, command=self.solve_puzzle)
-        solve_button.pack()
+
+        # Style the control buttons
+        button_font = ('Arial', 14)
+        control_frame = tk.Frame(self.master, bg='lightgrey')
+        control_frame.pack(pady=(20, 0))
+        reset_button = tk.Button(control_frame, text="Restart", width=10, height=1, font=button_font, command=self.reset_game)
+        reset_button.grid(row=0, column=0, padx=10)
+        solve_button = tk.Button(control_frame, text="Solve", width=10, height=1, font=button_font, command=self.solve_puzzle)
+        solve_button.grid(row=0, column=1, padx=10)
         
     def update_puzzle(self, state):
         for index, tile_value in enumerate(state):
@@ -190,7 +210,7 @@ class PuzzleGame:
         for state in solution_path:
             self.update_puzzle(state)
             self.master.update_idletasks()
-            time.sleep(0.2)  
+            time.sleep(0.05)  
         
 
 if __name__ == '__main__':
