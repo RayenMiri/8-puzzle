@@ -131,12 +131,6 @@ class PuzzleGame:
         else:
             self.update_status_bar("No solution found.")
 
-    def show_solution(self, solution_path):
-        for delay, state in enumerate(solution_path, 1):
-            self.master.after(delay * 500, self.update_puzzle, state)
-            if delay % 10 == 0:
-                self.master.update()
-
     def show_solution(self, solution_path, index=0):
         if index < len(solution_path):
             state = solution_path[index]
@@ -251,7 +245,9 @@ class PuzzleGame:
         move_sound.play()
         
     def show_solution(self, solution_path):
-        for state in solution_path:
+        for i,state in enumerate(solution_path, 1):  
+            SM = np.array(state).reshape(3, 3)
+            print(f"Move n° {i}\n{SM}\n")
             self.update_puzzle(state)
             self.master.update_idletasks()
             time.sleep(0.2)
